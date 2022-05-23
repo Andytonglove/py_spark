@@ -1,4 +1,7 @@
 # coding=utf-8
+import findspark
+findspark.init()
+
 from pyspark.sql import SparkSession
 # from pyspark.sql.functions import col
 import os
