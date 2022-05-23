@@ -2,7 +2,7 @@
 
 1、pyspark的版本号不对应：
 TypeError: an integer is required (got type bytes)等一长串
-本来装的是2.3.2，这里需要更新pyspark版本，这里建议2.4.5或2.4.0版本，用conda安装
+本来装的是2.3.2，这里需要更新pyspark版本，这里建议2.4.0（我目前）或2.4.5版本，用conda安装
 
 2、java环境变量问题：
 Exception: Java gateway process exited before sending its port number
