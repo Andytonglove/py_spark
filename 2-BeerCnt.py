@@ -3,6 +3,7 @@ import sys
 import imp
 imp.reload(sys)
 sys.setdefaultencoding("utf-8")
+# 特别的，控制台出现中文乱码情况，可通过chcp 65001设置编码为utf-8
 
 import findspark
 findspark.init()
