@@ -1,3 +1,4 @@
 # git rm -r --cached 文件/文件夹，先清除已经版本管理的
 .idea/
 .vscode/
+screenshot/
