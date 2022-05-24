@@ -106,7 +106,7 @@ def cntTop5SaleAmount():
 
 
 # 下面开始执行程序
-xlsx2txt("D://CodeWorkSpace//py2_spark//TestSpark//BeerSales.xlsx", "BeerSales.txt")
+xlsx2txt("BeerSales.xlsx", "BeerSales.txt")
 
 conf = SparkConf().setMaster("local").setAppName("BeerCnt")
 sc = SparkContext(conf = conf)  # 创建spark对象
