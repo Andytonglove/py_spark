@@ -71,7 +71,8 @@ from pyspark import SparkConf, SparkContext
 from pyspark.sql import SQLContext
 from pyspark.sql.types import Row
 
-conf = SparkConf().setMaster("local").setAppName("rdd2df")
+conf = SparkConf().setMaster("local").setAppName("RDD2DataFrame")
+# 设置端口号
 conf.set("spark.port.maxRetries", "128")
 conf.set("spark.ui.port", "12345")
 sc = SparkContext(conf=conf)  # 创建spark对象
@@ -83,9 +84,8 @@ schema_employee = sql_context.createDataFrame(line)
 # 创建一个临时的表
 schema_employee.createOrReplaceTempView('employee')
 df_employee = sql_context.sql('select * from employee')
-# 先用默认方式显示一下，哦，完美
-df_employee.show()
-# 再按照要求的方式输出，其实collect很浪费性能，但是数据量很小，就原谅一下吧
+df_employee.show()  # 打印出所有数据
+# 按规定格式打印所有结果
 df_employee_alter = df_employee.collect()
 for people in df_employee_alter:
     print("id:{0},name:{1},age:{2}".format(people.id, people.name, people.age))
@@ -104,9 +104,10 @@ import pymysql
 conn = pymysql.connect(host='localhost', port=3306, user="root", passwd="root")
 # 获取游标
 cursor = conn.cursor()
-# 创建testspark数据库，并使用
+# 创建testspark数据库testspark，并使用
 cursor.execute('CREATE DATABASE IF NOT EXISTS testspark;')
 cursor.execute('USE testspark;')
+# 创建数据表employee
 sql = "CREATE TABLE IF NOT EXISTS employee (id int(3) NOT NULL AUTO_INCREMENT,name varchar(255) NOT NULL,gender char(1) NOT NULL,Age int(3) NOT NULL,PRIMARY KEY (id))"
 cursor.execute(sql)
 cursor.execute("INSERT INTO employee (name,gender,Age) VALUES ('Alice','F',22)")
@@ -120,7 +121,7 @@ from pyspark import SparkContext, SparkConf
 from pyspark.sql import SQLContext, Row
 
 # spark 初始化
-conf = SparkConf().setMaster("local").setAppName("sparksql")
+conf = SparkConf().setMaster("local").setAppName("sparkMysql")
 conf.set("spark.port.maxRetries", "128")
 conf.set("spark.ui.port", "12345")
 sc = SparkContext(conf=conf)  # 创建spark对象
