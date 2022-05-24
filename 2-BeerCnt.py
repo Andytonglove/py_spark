@@ -3,7 +3,7 @@ import sys
 import imp
 imp.reload(sys)
 sys.setdefaultencoding("utf-8")
-# 特别的，控制台出现中文乱码情况，可通过chcp 65001设置编码为utf-8
+# 特别的，vscode控制台出现中文乱码情况，可通过chcp 65001设置编码为utf-8解决
 
 import findspark
 findspark.init()
@@ -20,7 +20,8 @@ def xlsx2txt(input_filename, output_filename):
     input_file_name = os.path.splitext(input_filename)[0]
     output_file_name = os.path.splitext(output_filename)[0]
     print("正在转换文件：" + input_file_name + ".xlsx")
-    if not os.path.exists(output_filename + '.txt'):
+    # 开始转换
+    if not os.path.exists(output_file_name + '.txt'):
         # 使用pandas模块读取数据，并写入文件
         df = pd.read_excel(input_filename, sheet_name='Sheet1', header=None, skiprows=1)
         df.to_csv(output_file_name + '.txt', header=None, sep='\t', index=False)  # sep用换行符分隔
@@ -32,6 +33,7 @@ def remove0sales():
     # 如果过去三周平均销量为0，则月销量即为0，将其过滤去除
     lines = line1.filter(lambda x: "0" != x[3])
     for item in lines.collect():
+        # 使用format格式化输出
         print("{0},{1},{2},{3},{4},{5},{6},{7}".format(item[0], item[1], item[2], item[3], item[4], item[5], item[6], item[7]))
 
 
@@ -53,8 +55,9 @@ def dataConvert():
 
 
 def typeCnt():
-    # 3）统计有多少类型的啤酒？distinct去重，count计数
-    print("统计共有" + str(line1.map(lambda x: x[1]).distinct().count()) + "种类型的啤酒。")
+    # 3）统计有多少类型的啤酒？通过distinct去重，count计数
+    types = line1.map(lambda x: x[1]).distinct().count()
+    print("统计共有" + str(types) + "种类型的啤酒。")
 
 
 def cntTop5SalesBeer(n):
@@ -107,6 +110,8 @@ line1 = line.map(lambda x: x.split("\t"))  # 基础按行分割，将文本转�
 
 print("1、去除整月销量为 0 的数据")
 remove0sales()
+print("2、转换数值格式，把销量数据中的引号、逗号等处理掉，并转换为数值")
+dataConvert()
 print("3、统计有多少类型的啤酒")
 typeCnt()
 print("4、统计哪 5 种啤酒卖得最好")
@@ -117,7 +122,5 @@ print("6、统计每种啤酒的 11 月份销量")
 cntSaleAmount()
 print("7、统计啤酒卖得最好的前三个区域的 11 月份销量")
 cntTop5SaleAmount()
-print("2、转换数值格式，把销量数据中的引号、逗号等处理掉，并转换为数值")
-dataConvert()
 
 sc.stop()
