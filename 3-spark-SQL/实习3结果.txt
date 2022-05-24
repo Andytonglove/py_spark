@@ -83,6 +83,7 @@
 Row(age=36, id=1, name=u' Ella')
 Row(age=29, id=2, name=u'Bob')
 Row(age=29, id=3, name=u'Jack')
+
 8.查询所有记录的name列,并为其取别名为username
 +--------+
 |username|
@@ -109,3 +110,21 @@ Row(age=29, id=3, name=u'Jack')
 +--------+
 |      28|
 +--------+
+
+
+2. 编程实现将RDD转换为DataFrame
+
++---+---+----+
+|age| id|name|
++---+---+----+
+| 36|  1|Ella|
+| 29|  2| Bob|
+| 29|  3|Jack|
++---+---+----+
+
+id:1,name:Ella,age:36
+id:2,name:Bob,age:29
+id:3,name:Jack,age:29
+
+
+3. 编程实现利用DataFrame读写MySQL的数据

@@ -110,11 +110,11 @@ def cntTop5SaleAmount(lineRDD1):
 
 
 # 下面开始执行程序
-xlsx2txt("BeerSales.xlsx", "BeerSales.txt")  # 读入原xlsx文件，并将excel文件转换为txt文件
+xlsx2txt("2-spark-RDD\BeerSales.xlsx", "BeerSales.txt")  # 读入原xlsx文件，并将excel文件转换为txt文件
 
 conf = SparkConf().setMaster("local").setAppName("BeerCnt")
 sc = SparkContext(conf = conf)  # 创建spark对象
-line = sc.textFile("BeerSales.txt")  # 读入txt文件
+line = sc.textFile("2-spark-RDD\BeerSales.txt")  # 读入txt文件
 lineRDD = line.map(lambda x: x.split("\t"))  # 基础按行分割，将文本转为RDD
 
 line2 = sc.textFile("BeerSales2.txt")  # 读入老师给出的txt文件，以供第二题使用
