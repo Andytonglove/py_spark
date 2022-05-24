@@ -374,7 +374,7 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 销量第5名的酒是百威9.7度330ML1X24纸箱听装，其销量为15340
 
 5、统计哪个销售区域销售的啤酒同比去年增长最快
-驻马店郊县区域的销量比去年同期增长最快，其增长率为3.1825266237
+信阳东片区区域的销量比去年同期增长最快，其增长率为2.72772799157
 
 6、统计每种啤酒的 11 月份销量
 维雪喜年华9度500ML1X12纸箱回瓶装(联合品牌V4)啤酒在今年11月的销量为6048
@@ -413,9 +413,9 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 
 7、统计啤酒卖得最好的前三个区域的 11 月份销量
 啤酒卖得最好的前三个区域的11月份销量如下:
-11月销量第1名的是信阳市区区域，其销量为信阳市区
-11月销量第2名的是豫南NL区域，其销量为豫南NL
-11月销量第3名的是信阳东片区区域，其销量为信阳东片区
-PS D:\CodeWorkSpace\py2_spark> SUCCESS: The process with PID 38984 (child process of PID 42412) has been terminated.
-SUCCESS: The process with PID 42412 (child process of PID 29760) has been terminated.
-SUCCESS: The process with PID 29760 (child process of PID 40908) has been terminated.
+11月销量第1名的是信阳市区区域，其销量为102460
+11月销量第2名的是豫南NL区域，其销量为58489
+11月销量第3名的是信阳东片区区域，其销量为42428
+PS D:\CodeWorkSpace\py2_spark> SUCCESS: The process with PID 19064 (child process of PID 23364) has been terminated.
+SUCCESS: The process with PID 23364 (child process of PID 39652) has been terminated.
+SUCCESS: The process with PID 39652 (child process of PID 37448) has been terminated.

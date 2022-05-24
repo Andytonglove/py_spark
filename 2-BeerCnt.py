@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 import imp
+
+from numpy import product
 imp.reload(sys)
 sys.setdefaultencoding("utf-8")
 # 特别的，vscode控制台出现中文乱码情况，可通过chcp 65001设置编码为utf-8解决
@@ -76,16 +78,22 @@ def cntTopSalesBeer(lineRDD1, n):
             i += 1
 
 
+def list_add(a, b):
+    # 用于计算每个月的销量总和
+    c = []
+    for i in range(len(a)):
+        c.append(a[i]+b[i])
+    return c
+
 def cntGrowRate(lineRDD1):
     # 5）统计哪个销售区域销售的啤酒同比去年增长最快？增长量=4+5+6+7-8列，应包含正负值。再求增长率。
     # 计算的时候注意：去年同期是月销量，不计算不准的预计销量，这里进行折算，乘以0.75。同时销量小于500的也不统计
-    region_list = lineRDD1.map(lambda x: (x[0], x[4] + x[5] + x[6] + x[7] - x[8])).filter(
-        lambda x: x[1] > 500).groupByKey().mapValues(list).collect()  # 先把数据按区域进行聚类
-    lines = region_list.filter(lambda x: int(x[8]) >= 500)
-    products = lines.map(lambda x: (x[2], (int(x[4]) + int(x[5]) + int(x[6]) - 0.75*int(x[8])) / int(x[8]))).reduceByKey(
-        lambda a, b: a + b).collect()  # 4+5+6-8列的0.75是为了折算去年同期的销量
-    popular_list = sorted(products, key=lambda x: x[1], reverse=True)
-    print("{0}区域的销量比去年同期增长最快，其增长率为{1}".format(popular_list[0][0], popular_list[0][1]))
+    lines = lineRDD1.map(lambda x: (x[2], [(int(x[3])*4 - int(x[8])), int(x[8])])).reduceByKey(
+        lambda a, b: [i + j for i, j in zip(a, b)])  # 先聚合计算4+5+6(即3*4倍)-8列的值作为一个键值对，再求增长率
+    # 上面zip()的作用将两个列表对应相加实现区域综合，下面再过滤掉销量小于500的并求增长率
+    linepro = lines.filter(lambda x: int(x[1][1]) >= 500).map(lambda x: (x[0], (float(x[1][0]) / x[1][1]))).collect()
+    popular_list = sorted(linepro, key=lambda x: x[1], reverse=True)
+    print("{0}区域的销量比去年同期增长最快，其增长率为{1}".format(popular_list[0][0], popular_list[0][1]))  # 打印结果
 
 
 def cntSaleAmount(lineRDD1):
@@ -105,7 +113,7 @@ def cntTop5SaleAmount(lineRDD1):
     print("啤酒卖得最好的前三个区域的11月份销量如下:")
     for item in popular_list:
         if i < 3:
-            print("11月销量第{0}名的是{1}区域，其销量为{1}".format(i + 1, item[0], item[1]))
+            print("11月销量第{0}名的是{1}区域，其销量为{2}".format(i + 1, item[0], item[1]))
             i += 1
 
 
