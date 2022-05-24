@@ -79,9 +79,9 @@ def cntTopSalesBeer(lineRDD1, n):
 def cntGrowRate(lineRDD1):
     # 5）统计哪个销售区域销售的啤酒同比去年增长最快？增长量=4+5+6+7-8列，应包含正负值。再求增长率。
     # 计算的时候注意：去年同期是月销量，不计算不准的预计销量，这里进行折算，乘以0.75。同时销量小于500的也不统计
-    # 先把数据按区域进行聚类
-    lines = sorted(lineRDD1, key=lambda x: x[1])
-    lines = lines.filter(lambda x: int(x[8]) >= 500)
+    region_list = lineRDD1.map(lambda x: (x[0], x[4] + x[5] + x[6] + x[7] - x[8])).filter(
+        lambda x: x[1] > 500).groupByKey().mapValues(list).collect()  # 先把数据按区域进行聚类
+    lines = region_list.filter(lambda x: int(x[8]) >= 500)
     products = lines.map(lambda x: (x[2], (int(x[4]) + int(x[5]) + int(x[6]) - 0.75*int(x[8])) / int(x[8]))).reduceByKey(
         lambda a, b: a + b).collect()  # 4+5+6-8列的0.75是为了折算去年同期的销量
     popular_list = sorted(products, key=lambda x: x[1], reverse=True)
@@ -110,11 +110,11 @@ def cntTop5SaleAmount(lineRDD1):
 
 
 # 下面开始执行程序
-xlsx2txt("2-spark-RDD\BeerSales.xlsx", "BeerSales.txt")  # 读入原xlsx文件，并将excel文件转换为txt文件
+xlsx2txt("BeerSales.xlsx", "BeerSales.txt")  # 读入原xlsx文件，并将excel文件转换为txt文件
 
 conf = SparkConf().setMaster("local").setAppName("BeerCnt")
 sc = SparkContext(conf = conf)  # 创建spark对象
-line = sc.textFile("2-spark-RDD\BeerSales.txt")  # 读入txt文件
+line = sc.textFile("BeerSales.txt")  # 读入txt文件
 lineRDD = line.map(lambda x: x.split("\t"))  # 基础按行分割，将文本转为RDD
 
 line2 = sc.textFile("BeerSales2.txt")  # 读入老师给出的txt文件，以供第二题使用
