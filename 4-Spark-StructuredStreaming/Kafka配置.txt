@@ -1,0 +1,10 @@
+Win下Zookeeper+Kafka与Spark的环境配置
+
+解压安装Zookeeper+Kafka，分别按需修改其配置信息，并添加环境变量
+在cmd中启动Zookeeper，运行：zkserver
+在bin/windows文件夹下启动powershell，运行kafka：./kafka-server-start.bat ../../config/server.properties
+
+把Kafka安装目录的libs目录下的所有jar文件复制到相应“spark/jars/kafka”目录下。
+修改Spark配置文件，地址在spark的bin目录下。
+把Kafka相关jar包的路径信息增加到load-spark-env.cmd：(具体路径和安装目录一致)
+Set SPARK_DIST_CLASSPATH=$(D:\spark-2.3.2-bin-hadoop2.7\bin classpath):D:\spark-2.3.2-bin-hadoop2.7\jars\kafka\*:D:\spark-2.3.2-bin-hadoop2.7\examples\jars\*:D:\kafka_2.12-2.4.1\libs\*

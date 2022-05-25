@@ -17,6 +17,7 @@
     2. Jdk 1.8 + scala-2.12.5 + spark-2.3.2-bin-hadoop2.7 + winUtils
     3. Ubuntu16 / CentOS7 + Xshell
     4. MySQL + jdbc + pymysql
+    5. Kafka + Zookeeper
 
 
 - Reference：[github repository](https://github.com/uiharuayako/geoDataWork.git)

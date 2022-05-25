@@ -3,3 +3,6 @@
 .vscode/
 screenshot/
 TestSpark/
+*.zip
+*.rar
+000/
