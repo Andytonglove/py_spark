@@ -42,16 +42,16 @@ conf.set("spark.port.maxRetries", "128")
 conf.set("spark.ui.port", "12345")
 sc = SparkContext(conf=conf)  # 创建spark对象
 spark = SQLContext(sc)
-# mysql 配置
-prop = {'user': 'root',
-        'password': 'root',
-        'driver': 'com.mysql.cj.jdbc.Driver'}
-# database
-# 这里先需要在命令行下给spark添加jdbc？
-# spark-shell --jars mysql-connector-java-5.1.23-bin.jar --driver-class-path mysql-connector-java-5.1.23-bin.jar
-url = 'jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC'
+# mysql 配置，连接用户和jdbc
+prop = {
+    "user": "root",
+    "password": "root",
+    "driver": "com.mysql.jdbc.Driver"
+}
+# 连接mysql数据库，这里需要先添加jdbc的依赖包到spark/jars中，这里加入useSSL去除安全提示
+url = 'jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC&useSSL=false'
 
-# 读取表
+# 读取表并插入数据
 employeeRDD = sc.parallelize(["Mary F 26", "Tom M 23"]).map(lambda x: x.split(" ")).map(
     lambda p: Row(name=p[0].strip(), gender=p[1].strip(), Age=int(p[2].strip())))
 schema_employee = spark.createDataFrame(employeeRDD)
@@ -59,12 +59,19 @@ schema_employee = spark.createDataFrame(employeeRDD)
 schema_employee.createOrReplaceTempView('employee')
 employeeDF = spark.sql('select * from employee')
 employeeDF.show()
-employeeDF.write.jdbc(url=url, table='employee', mode='append',
-                      properties=prop)
+employeeDF.write.jdbc(url=url, table='employee', mode='append', properties=prop)
 
+# 求Age的最大值
+age_max = spark.read.format("jdbc").options(
+    url='jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC&user=root&password=root&useSSL=false',
+    dbtable="(SELECT max(Age) FROM employee) tmp",
+    driver='com.mysql.jdbc.Driver').load()
+age_max.show()
+
+# 求Age的总和
 age_sum = spark.read.format("jdbc").options(
-    url='jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC&user=root&password=root',
+    url='jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC&user=root&password=root&useSSL=false',
     dbtable="(SELECT sum(Age) FROM employee) tmp",
-    driver='com.mysql.cj.jdbc.Driver').load()
+    driver='com.mysql.jdbc.Driver').load()
 age_sum.show()
 sc.stop()
