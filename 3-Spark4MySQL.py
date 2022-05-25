@@ -47,6 +47,8 @@ prop = {'user': 'root',
         'password': 'root',
         'driver': 'com.mysql.cj.jdbc.Driver'}
 # database
+# 这里先需要在命令行下给spark添加jdbc？
+# spark-shell --jars mysql-connector-java-5.1.23-bin.jar --driver-class-path mysql-connector-java-5.1.23-bin.jar
 url = 'jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC'
 
 # 读取表

@@ -2,7 +2,6 @@
 import sys
 import imp
 
-from numpy import product
 imp.reload(sys)
 sys.setdefaultencoding("utf-8")
 # 特别的，vscode控制台出现中文乱码情况，可通过chcp 65001设置编码为utf-8解决
@@ -31,8 +30,8 @@ def xlsx2txt(input_filename, output_filename):
 
 def remove0sales():
     # 1）去除整月销量为 0 的数据
-    # 如果过去三周平均销量为0，则月销量即为0，且数据可信不出错，将其过滤去除
-    lines = lineRDD.filter(lambda x: "0" != x[3])
+    # 如果过去三周平均销量与预计第四周销量均为0，这里简写为和，则月销量即为0，且数据可信不出错，将其过滤去除
+    lines = lineRDD.filter(lambda x: 0 != (int(x[3])*3 + int(x[7])))
     # 再次过滤去除4、5、6列之和的平均值不等于第3列的数据，
     # 由于小数点与整数计算误差，这里应该让误差在原有小数点计算的误差1以内，乘三计算即为3
     lines2 = lines.filter(lambda x: abs(int(x[4]) + int(x[5]) + int(x[6]) - 3*int(x[3])) < 3)
@@ -78,13 +77,6 @@ def cntTopSalesBeer(lineRDD1, n):
             i += 1
 
 
-def list_add(a, b):
-    # 用于计算每个月的销量总和
-    c = []
-    for i in range(len(a)):
-        c.append(a[i]+b[i])
-    return c
-
 def cntGrowRate(lineRDD1):
     # 5）统计哪个销售区域销售的啤酒同比去年增长最快？增长量=4+5+6+7-8列，应包含正负值。再求增长率。
     # 计算的时候注意：去年同期是月销量，不计算不准的预计销量，这里进行折算，乘以0.75。同时销量小于500的也不统计
@@ -93,7 +85,8 @@ def cntGrowRate(lineRDD1):
     # 上面zip()的作用将两个列表对应相加实现区域综合，下面再过滤掉销量小于500的并求增长率
     linepro = lines.filter(lambda x: int(x[1][1]) >= 500).map(lambda x: (x[0], (float(x[1][0]) / x[1][1]))).collect()
     popular_list = sorted(linepro, key=lambda x: x[1], reverse=True)
-    print("{0}区域的销量比去年同期增长最快，其增长率为{1}".format(popular_list[0][0], popular_list[0][1]))  # 打印结果
+    percent = popular_list[0][1]*100
+    print("{0}区域的销量比去年同期增长最快，其增长率为{1}，即{2}%".format(popular_list[0][0], popular_list[0][1], percent))  # 打印结果
 
 
 def cntSaleAmount(lineRDD1):
