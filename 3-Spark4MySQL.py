@@ -38,8 +38,8 @@ from pyspark.sql import SQLContext, Row
 
 # spark 初始化
 conf = SparkConf().setMaster("local").setAppName("sparkMysql")
-conf.set("spark.port.maxRetries", "128")
-conf.set("spark.ui.port", "12345")
+conf.set("spark.port.maxRetries", "100")
+conf.set("spark.ui.port", "4040")
 sc = SparkContext(conf=conf)  # 创建spark对象
 spark = SQLContext(sc)
 # mysql 配置，连接用户和jdbc
@@ -55,11 +55,11 @@ url = 'jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC&useSSL=false'
 employeeRDD = sc.parallelize(["Mary F 26", "Tom M 23"]).map(lambda x: x.split(" ")).map(
     lambda p: Row(name=p[0].strip(), gender=p[1].strip(), Age=int(p[2].strip())))
 schema_employee = spark.createDataFrame(employeeRDD)
-# 创建一个临时表
+# 创建一个临时表，选取employee
 schema_employee.createOrReplaceTempView('employee')
-employeeDF = spark.sql('select * from employee')
-employeeDF.show()
-employeeDF.write.jdbc(url=url, table='employee', mode='append', properties=prop)
+df_employee = spark.sql('select * from employee')
+df_employee.show()  # 查看添加的数据
+df_employee.write.jdbc(url=url, table='employee', mode='append', properties=prop)
 
 # 求Age的最大值
 age_max = spark.read.format("jdbc").options(
