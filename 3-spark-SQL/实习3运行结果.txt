@@ -1,6 +1,6 @@
 实习3的三个程序的命令行运行结果均在此文件中。
 
-1. Spark SQL 基本操作
+1. Spark SQL 基本操作（3-SparkSQL.py）
 
 1.查询所有数据:
 +----+---+-----+
@@ -27,18 +27,6 @@
 +----+---+-----+
 
 3.查询所有数据,打印时去除id字段:
-+----+-----+
-| age| name|
-+----+-----+
-|  36| Ella|
-|  29|  Bob|
-|  29| Jack|
-|  28|  Jim|
-|  28|  Jim|
-|null|Damon|
-|null|Damon|
-+----+-----+
-
 +-----+----+
 | name| age|
 +-----+----+
@@ -114,8 +102,9 @@ Row(age=29, id=3, name=u'Jack')
 +--------+
 
 
-2. 编程实现将RDD转换为DataFrame
+2. 编程实现将RDD转换为DataFrame（3-Rdd2DataFrame.py）
 
+所有的结果：
 +---+---+----+
 |age| id|name|
 +---+---+----+
@@ -123,27 +112,28 @@ Row(age=29, id=3, name=u'Jack')
 | 29|  2| Bob|
 | 29|  3|Jack|
 +---+---+----+
-
+按规定格式打印：
 id:1,name:Ella,age:36
 id:2,name:Bob,age:29
 id:3,name:Jack,age:29
 
 
-3. 编程实现利用DataFrame读写MySQL的数据
+3. 编程实现利用DataFrame读写MySQL的数据（3-Spark4MySQL.py）
 
+新插入的数据:
 +---+------+----+
 |Age|gender|name|
 +---+------+----+
 | 26|     F|Mary|
 | 23|     M| Tom|
 +---+------+----+
-
+Age最大值：
 +--------+
 |max(Age)|
 +--------+
 |      26|
 +--------+
-
+Age总和：
 +--------+
 |sum(Age)|
 +--------+

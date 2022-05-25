@@ -24,7 +24,7 @@ cursor = conn.cursor()
 cursor.execute('CREATE DATABASE IF NOT EXISTS testspark;')
 cursor.execute('USE testspark;')
 # 创建数据表employee
-sql = "CREATE TABLE IF NOT EXISTS employee (id int(3) NOT NULL AUTO_INCREMENT,name varchar(255) NOT NULL,gender char(1) NOT NULL,Age int(3) NOT NULL,PRIMARY KEY (id))"
+sql = "CREATE TABLE IF NOT EXISTS employee (id int(11) NOT NULL AUTO_INCREMENT,name varchar(255) NOT NULL,gender char(1) NOT NULL,Age int(11) NOT NULL,PRIMARY KEY (id))"
 cursor.execute(sql)
 cursor.execute("INSERT INTO employee (name,gender,Age) VALUES ('Alice','F',22)")
 cursor.execute("INSERT INTO employee (name,gender,Age) VALUES ('John','M',25)")
@@ -64,14 +64,14 @@ df_employee.write.jdbc(url=url, table='employee', mode='append', properties=prop
 # 求Age的最大值
 age_max = spark.read.format("jdbc").options(
     url='jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC&user=root&password=root&useSSL=false',
-    dbtable="(SELECT max(Age) FROM employee) tmp",
+    dbtable="(SELECT max(Age) FROM employee) max",
     driver='com.mysql.jdbc.Driver').load()
 age_max.show()
 
 # 求Age的总和
 age_sum = spark.read.format("jdbc").options(
     url='jdbc:mysql://localhost:3306/testspark?serverTimezone=UTC&user=root&password=root&useSSL=false',
-    dbtable="(SELECT sum(Age) FROM employee) tmp",
+    dbtable="(SELECT sum(Age) FROM employee) sum",
     driver='com.mysql.jdbc.Driver').load()
 age_sum.show()
 sc.stop()

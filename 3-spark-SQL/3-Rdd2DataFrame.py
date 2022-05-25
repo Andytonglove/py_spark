@@ -26,11 +26,11 @@ sc = SparkContext(conf=conf)  # 创建spark对象
 line = sc.textFile("employee.txt").map(lambda x: x.split(",")).map(
     lambda y: Row(id=int(y[0]), name=y[1], age=int(y[2])))  # 读入文件
 
-sql_context = SQLContext(sc)  # 创建sql对象以进行执行
-schema_employee = sql_context.createDataFrame(line)
+sql = SQLContext(sc)  # 创建sql对象以进行执行
+schema_employee = sql.createDataFrame(line)
 
 schema_employee.createOrReplaceTempView('employee')  # 创建临时表
-df_employee = sql_context.sql('select * from employee')
+df_employee = sql.sql('select * from employee')
 df_employee.show()  # 打印出所有数据
 # 按规定格式打印所有结果
 sort_df_employee = df_employee.collect()
