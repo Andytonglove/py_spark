@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import imp
+from this import d
 imp.reload(sys)
 sys.setdefaultencoding("utf-8")
 
@@ -21,19 +22,23 @@ from pyspark.sql.types import StructType, StringType
 
 def dist(lat1, lon1, lat2, lon2):
     # 计算两点间距离 wgs84 单位:m
-    # 传入参数为第一点和第二点的纬度和经度
-    lat1 = float(lat1)
-    lat2 = float(lat2)
-    lon1 = float(lon1)
-    lon2 = float(lon2)
-    R = 6371
-    dLat = (lat2 - lat1) * math.pi / 180.0
-    dLon = (lon2 - lon1) * math.pi / 180.0
+    # 传入参数为第一点和第二点的纬度和经度列
+    # TODO
+    dist = []
+    for i in lat1.collect():
+        print(lat1.head(i))
+        lat1 = float(lat1.head(i))
+        lat2 = float(lat2.head(i))
+        lon1 = float(lon1.head(i))
+        lon2 = float(lon2.head(i))
+        R = 6371
+        dLat = (lat2 - lat1) * math.pi / 180.0
+        dLon = (lon2 - lon1) * math.pi / 180.0
 
-    a = math.sin(dLat / 2) * math.sin(dLat / 2) + math.cos(lat1 * math.pi / 180.0) * math.cos(
-        lat2 * math.pi / 180.0) * math.sin(dLon / 2) * math.sin(dLon / 2)
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    dist = R * c
+        a = math.sin(dLat / 2) * math.sin(dLat / 2) + math.cos(lat1 * math.pi / 180.0) * math.cos(
+            lat2 * math.pi / 180.0) * math.sin(dLon / 2) * math.sin(dLon / 2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        dist[i] = R * c
     return dist * 1000
 
 
@@ -67,10 +72,13 @@ if __name__ == "__main__":
     res = res.selectExpr("CAST(lat1 AS DOUBLE)", "CAST(lon1 AS DOUBLE)", "CAST(lat2 AS DOUBLE)", 
         "CAST(lon2 AS DOUBLE)", "CAST(time1 AS STRING)", "CAST(time2 AS STRING)", "CAST(dist AS DOUBLE)")
 
+    # 计算两点之间的距离，注意这里返回的是整个列即'Column' object，需要进行处理
+    res = res.withColumn("distance", dist(res.lat1, res.lon1, res.lat2, res.lon2).toDF("distance"))
+
     # 计算时间差
     res = res.withColumn("time_diff", 86400*(res.time1 - res.time2).cast("double"))
     # 计算速度
-    res = res.withColumn("speed", (res.dist / res.time_diff).cast("double"))
+    res = res.withColumn("speed", (res.distance / res.time_diff).cast("double"))
     # 将结果打印到控制台中
     query = res.writeStream \
         .outputMode("append") \
