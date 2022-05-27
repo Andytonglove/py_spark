@@ -2,6 +2,7 @@
 import findspark
 findspark.init()
 
+# 导入pyspark模块
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json
 from pyspark.sql.types import StructType, StringType
@@ -15,8 +16,7 @@ if __name__ == '__main__':
         .getOrCreate() 
 
     spark.sparkContext.setLogLevel('WARN')
-    # 创建输入数据源，定义配套dataFrame
-    # 创建一个输入数据源，从kafka的test主题中接收消息。
+    # 创建输入数据源，定义配套dataFrame；从kafka的test主题中接收消息。
     df = spark.readStream \
             .format("kafka") \
             .option("kafka.bootstrap.servers", "localhost:9092") \

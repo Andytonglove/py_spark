@@ -5,11 +5,6 @@ Win下Zookeeper+Kafka与Spark的环境配置与测试
 在bin/windows文件夹下启动powershell，运行kafka：./kafka-server-start.bat ../../config/server.properties
 启动两者的服务，并且保持命令行窗口分别开启。
 
-把Kafka安装目录的libs目录下的所有jar文件复制到相应“spark/jars/kafka”目录下。
-修改Spark配置文件，地址在spark的bin目录下？
-把Kafka相关jar包的路径信息增加到load-spark-env.cmd：(具体路径和安装目录一致)
-Set SPARK_DIST_CLASSPATH=$(D:\spark-2.3.2-bin-hadoop2.7\bin classpath):D:\spark-2.3.2-bin-hadoop2.7\jars\kafka\*:D:\spark-2.3.2-bin-hadoop2.7\examples\jars\*:D:\kafka_2.12-2.4.1\libs\*
-
 4. 建一个名为test的topic：
 kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic test
 
@@ -20,3 +15,10 @@ kafka-console-producer.bat --broker-list localhost:9092 --topic test
 6. 打开一个 CONSUMER:
 cd D:\kafka_2.12-2.4.1\bin\windows
 kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic test --from-beginning
+
+在命令行下，可以看到卡夫卡消息的收和发。如使用Python程序进行，则需如下配置：
+
+把Kafka安装目录的libs目录下的所有jar文件复制到相应“spark/jars/kafka”目录下。
+修改Spark配置文件，地址在spark的bin目录下？
+把Kafka相关jar包的路径信息增加到load-spark-env.cmd：(具体路径和安装目录一致)
+Set SPARK_DIST_CLASSPATH=$(D:\spark-2.3.2-bin-hadoop2.7\bin classpath):D:\spark-2.3.2-bin-hadoop2.7\jars\kafka\*:D:\spark-2.3.2-bin-hadoop2.7\examples\jars\*:D:\kafka_2.12-2.4.1\libs\*
