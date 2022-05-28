@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import imp
-from this import d
 imp.reload(sys)
 sys.setdefaultencoding("utf-8")
 
@@ -78,7 +77,7 @@ if __name__ == "__main__":
     # 计算时间差
     res = res.withColumn("time_diff", 86400*(res.time1 - res.time2).cast("double"))
     # 计算速度
-    res = res.withColumn("speed", (res.distance / res.time_diff).cast("double"))
+    res = res.withColumn("speed", (res.dist / res.time_diff).cast("double"))
     # 将结果打印到控制台中
     query = res.writeStream \
         .outputMode("append") \
