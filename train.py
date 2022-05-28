@@ -167,13 +167,19 @@ sc = SparkContext(conf=conf)  # 创建spark对象
 sqlContext = SQLContext(sc)
 data = sc.textFile("adult/adult.data").map(lambda line: line.split(', ')).map(
     lambda p: Row(**f(p))).toDF()
+
+# 数据预处理
 labelIndexer = StringIndexer().setInputCol("label").setOutputCol("indexedLabel").fit(data)
 featureIndexer = VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(4).fit(data)
 labelConverter = IndexToString().setInputCol("prediction").setOutputCol("predictedLabel").setLabels(labelIndexer.labels)
 trainingData = data
-testData = sc.textFile("adult/adult.test").map(lambda line: line.split(', ')).map(
+
+# 这里adult.test里存在50K.的错误数据，通过vscode全部替换为50K的正常数据
+testData = sc.textFile("adult/adult-new.test").map(lambda line: line.split(', ')).map(
     lambda p: Row(**f(p))).toDF()
 dtClassifier = DecisionTreeClassifier().setLabelCol("indexedLabel").setFeaturesCol("indexedFeatures")
+
+# 流水线
 dtPipeline = Pipeline().setStages([labelIndexer, featureIndexer, dtClassifier, labelConverter])
 dtPipelineModel = dtPipeline.fit(trainingData)
 dtPredictions = dtPipelineModel.transform(testData)
