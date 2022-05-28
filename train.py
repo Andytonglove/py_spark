@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-import sys
-import imp
-imp.reload(sys)
-sys.setdefaultencoding("utf-8")
-
+from itertools import islice
 import findspark
 findspark.init()
 
@@ -17,7 +12,8 @@ findspark.init()
 3. 对Test数据集进行验证,输出模型的准确率。
 '''
 
-# pyspark存在部分问题；因此将data的前16000行作为训练集，test做测试集，运行
+# pyspark存在部分问题；因此将data的后部分数据作为训练集，test做验证集，运行
+# 这里由于编码的部分原因，此决策树训练环境改用为py3.6
 
 from pyspark.ml.classification import DecisionTreeClassificationModel
 from pyspark.ml.classification import DecisionTreeClassifier
@@ -165,25 +161,31 @@ conf = SparkConf().setMaster("local").setAppName("ml")
 sc = SparkContext(conf=conf)  # 创建spark对象
 # solve the question:AttributeError: 'PipelinedRDD' object has no attribute 'toDF'
 sqlContext = SQLContext(sc)
-data = sc.textFile("adult/adult.data").map(lambda line: line.split(', ')).map(
-    lambda p: Row(**f(p))).toDF()
+# 这里data数据用于训练
+data = sc.textFile("adult/adult.data").mapPartitionsWithIndex(
+    lambda i, test_iter: islice(test_iter, 20000, None) if i == 0 else test_iter).map(
+        lambda line: line.split(', ')).map(
+            lambda p: Row(**f(p))).toDF()
 
-# 数据预处理
 labelIndexer = StringIndexer().setInputCol("label").setOutputCol("indexedLabel").fit(data)
 featureIndexer = VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(4).fit(data)
 labelConverter = IndexToString().setInputCol("prediction").setOutputCol("predictedLabel").setLabels(labelIndexer.labels)
 trainingData = data
 
 # 这里adult.test里存在50K.的错误数据，通过vscode全部替换为50K的正常数据
-testData = sc.textFile("adult/adult-new.test").map(lambda line: line.split(', ')).map(
-    lambda p: Row(**f(p))).toDF()
+# test一共16000行，跳过10000行，用于验证
+testData = sc.textFile("adult/adult.test").mapPartitionsWithIndex(
+    lambda i, test_iter: islice(test_iter, 10000, None) if i == 0 else test_iter).map(
+        lambda line: line.split(', ')).map(
+            lambda p: Row(**f(p))).toDF()
 dtClassifier = DecisionTreeClassifier().setLabelCol("indexedLabel").setFeaturesCol("indexedFeatures")
 
 # 流水线
 dtPipeline = Pipeline().setStages([labelIndexer, featureIndexer, dtClassifier, labelConverter])
 dtPipelineModel = dtPipeline.fit(trainingData)
 dtPredictions = dtPipelineModel.transform(testData)
-dtPredictions.select("predictedLabel", "label", "features").show(20)
+dtPredictions.select("predictedLabel", "label", "features").show(30)
 evaluator = MulticlassClassificationEvaluator().setLabelCol("indexedLabel").setPredictionCol("prediction")
+# 输出精度
 dtAccuracy = evaluator.evaluate(dtPredictions)
 print(dtAccuracy)

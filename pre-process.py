@@ -1,27 +1,20 @@
-# -*- coding: utf-8 -*-
-import sys
-import imp
-imp.reload(sys)
-sys.setdefaultencoding("utf-8")
-
 import findspark
 findspark.init()
 
 import pandas as pd
 
 '''
-文件预处理：
-这里做了两种验证，第一个是验证是不是有数据为空，为?的数据视为不空。去除空行。
-随后做第二步验证，就是用长if验证每一位的数据是否有效且字符串为纯数字。
-如为字符串的，则在字典里找有没有对应的key，发现adult.data以及adult.test都没有错误。
-当然，.test文件中结尾是50K.，这里直接用vscode替换全部成50K改过来了。
+文件预处理与数据验证：
+1、验证是不是有数据为空。这里存在为?的数据视为不空。去除空行。
+2、用if嵌套验证每一位的数据是否有效且字符串为纯数字。如为字符串则在字典里找有没有对应的key。
+发现adult.data以及adult.test都没有错误。对于.test文件则在后续进行处理
 '''
 
 data = pd.read_csv('adult/adult.data', header=None, sep=', ', engine='python')
 print(data.shape)
 # 第一步，判定含有空值的行
-null_lines = data.isnull().T.any()
-for index, value in null_lines.iteritems():  # items需要换成iteritems
+line_null = data.isnull().T.any()
+for index, value in line_null.iteritems():  # items需要换成iteritems
     if value:
         print("{}行有空值".format(index + 1))
 # 去除空值
