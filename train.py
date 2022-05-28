@@ -8,6 +8,10 @@ import findspark
 findspark.init()
 
 '''
+数据集: 下载Adult数据集(http://archive.ics.uci.edu/ml/datasets/Adult)。
+数据从美国1994年人口普查数据库抽取而来，可用来预测居民收入是否超过50K$/year。
+该数据集类变量为年收入是否超过50k$，属性变量包含年龄、工种、学历、职业、人种等重要信息。
+
 1. 从文件中导入数据,并转化为DataFrame。
 2. 训练决策树模型,用于预测居民收入是否超过50K。
 3. 对Test数据集进行验证,输出模型的准确率。
