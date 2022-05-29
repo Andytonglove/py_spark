@@ -1,11 +1,13 @@
+import findspark
+findspark.init()
+
 import math
 import numpy as np
-
 import pandas as pd
-from pyspark import SQLContext
+from pyspark.sql import SparkSession
 
 
-def dist_ll(lat1, lon1, lat2, lon2):
+def cal_dist(lat1, lon1, lat2, lon2):
     # 计算两点间距离 wgs84 单位:m
     # 传入参数为第一点和第二点的纬度和经度
     lat1 = float(lat1)
@@ -27,12 +29,12 @@ def dist_ll(lat1, lon1, lat2, lon2):
 def calPltSpeed(path):
     pandas_df = pd.read_csv(path, header=None, skiprows=6, usecols=[0, 1, 3, 4, 5, 6],
                             names=['Latitude', 'Longitude', 'Altitude', 'Day_from1899', 'Date',
-                                   'Time'])
+                                   'Time'])  # 读取csv文件，并设置列名，跳过前六行
     # 计算车辆速度，开始和最后都是0
     speed = [0]
     for i in range(pandas_df.shape[0] - 2):
         speed.append(
-            dist_ll(pandas_df.loc[i + 1][0], pandas_df.loc[i + 1][1], pandas_df.loc[i][0], pandas_df.loc[i][1]) / (
+            cal_dist(pandas_df.loc[i + 1][0], pandas_df.loc[i + 1][1], pandas_df.loc[i][0], pandas_df.loc[i][1]) / (
                     86400 * (float(pandas_df.loc[i + 1][3]) - float(pandas_df.loc[i][3]))))
     speed.append(0)
     pandas_df['speed'] = speed
@@ -44,7 +46,7 @@ def calPltSpeed(path):
     acceleration.append(0)
     pandas_df['acceleration'] = acceleration
     pandas_df['id'] = range(1, pandas_df.shape[0] + 1)
-    return SQLContext.createDataFrame(pandas_df)
+    return pandas_df
 
 
 
@@ -55,14 +57,14 @@ def calc_stop_point(df):
 
 
 # 3、单调区间分析函数，分析加减速区间并保存成文件
-def analyse_speed(points, num, up):
+def analyse_speed(points, num, up, all_points):
     """
     :param points:输入spark DF的点列表
     :param num:输入最少数目
     :param up:布尔值 true加速 false减速
     :return:void
     """
-    # 把停止点表转为list
+    # 把停止点df表转为list
     p_list = points.collect()
     # 把静止点的序号提取成一个数组
     p_index = []
@@ -88,7 +90,7 @@ def analyse_speed(points, num, up):
         # 分析区间
         for index_in_real, single_period in enumerate(new_group):
             tmp_acc_period = []
-            all_points = points.filter(points.id.isin(single_period)).collect()  # 初始化一个点列表
+            single_period = list(single_period)
             print("第{0}个{4}区间包含{1}个数据点，这个区间开始的时间为{2}的{3}".format(index_in_real + 1, len(single_period),
                                                                  all_points[single_period[0] - 1].Date,
                                                                  all_points[single_period[0] - 1].Time,
@@ -112,9 +114,9 @@ def analyse_speed(points, num, up):
         for index_in_save, single_period in enumerate(periods):
             tmpdf = pd.DataFrame(
                 columns=['Latitude', 'Longitude', 'Altitude', 'Day_from1899', 'Date', 'Time', 'speed', 'acceleration',
-                         'id', 'Stop', 'Speed_up'], data=single_period)
+                         'id', 'Stop'], data=single_period)  # 这里col删去'Speed_up'项
 
-            tmpdf.to_csv('points/period/' + ("加速" if up else "减速") + '区间' + str(index_in_save + 1) + '.csv',
+            tmpdf.to_csv('D:\\CodeWorkSpace\\py2_spark\\170\\results\\' + ("加速" if up else "减速") + '区间' + str(index_in_save + 1) + '.csv',
                          index=False)
 
 
@@ -124,12 +126,19 @@ def analyse_speed(points, num, up):
 
 # 之后的函数是简单的输出和保存处理
 if __name__ == "__main__":
+    # 创建spark session
+    spark = SparkSession.builder.master("local[*]").appName("trajectoryAnalysis").getOrCreate()
+    path = '170\\Trajectory\\20080428112704.plt'  # 为简化起见，这里选择170号数据的第一个文件
+
     # 读取数据，计算速度
-    df = calPltSpeed("170\\Trajectory\\20080428112704.plt")
-    print(df.show(5))
+    df = calPltSpeed(path)
+    print(df.head(5))  # 打印前5行
 
     # 分析停止点
-    res = calc_stop_point(df)
+    spark_df = spark.createDataFrame(df)
+    res = calc_stop_point(spark_df)
+    all_dfl = res.select('Latitude', 'Longitude', 'Altitude', 'Day_from1899', 'Date', 'Time', 'speed', 
+                    'acceleration', 'id', 'Stop').collect()  # 将df转为list
     print(res.show(5))
     sdf = res.filter(res['Stop'] == 1)
     # 把停止点表转为list
@@ -141,9 +150,18 @@ if __name__ == "__main__":
 
     sp_array = np.array(sp_index)
     sp_group = np.split(sp_array, np.where(np.diff(sp_array) != 1)[0] + 1)
-    print(sp_group)
+    # print(sp_group)
 
     # 分析加速区间
-    analyse_speed(stop_points, 10, True)
+    analyse_speed(sdf, 10, True, all_dfl)
     # 分析减速区间
-    analyse_speed(stop_points, 10, False)
+    analyse_speed(sdf, 10, False, all_dfl)
+
+
+    # my_window = Window.partitionBy().orderBy("time")
+    # schema_train = schema_train. \
+    # withColumn("speed",
+    #            speed_calc(lag("lon", 1).over(my_window).cast("float"), lag("lat", 1).over(my_window).cast("float"),
+    #                      col("lon").cast("float"), col("lat").cast("float"),
+    #                      lag("time", 1).over(my_window), col("time")))
+    # #其中speed-calc是通过每点与前一点的经纬度、时间差算出瞬时速度
