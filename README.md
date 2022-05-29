@@ -5,10 +5,11 @@
     3. Spark SQL
     4. 流式时空数据处理
     5. 决策树分类
+    6. 基于Spark的车辆轨迹分析
 
 
 - Personal Environment：
-    1. Windows: Anaconda3 - Python2.7 or higher (Python 3.6)
+    1. Windows: Anaconda3 - Python 2.7 or Python 3.6
         - pyspark 2.4.0+
         - findspark
         - py4j
