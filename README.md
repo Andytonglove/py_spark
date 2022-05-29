@@ -8,7 +8,7 @@
 
 
 - Personal Environment：
-    1. Windows: Anaconda3 - Python2.7 or higher (Less than 3.8)
+    1. Windows: Anaconda3 - Python2.7 or higher (Python 3.6)
         - pyspark 2.4.0+
         - findspark
         - py4j
