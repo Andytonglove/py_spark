@@ -25,7 +25,7 @@ from pyspark.ml.feature import IndexToString, StringIndexer, VectorIndexer
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SQLContext
 
-# 字典出类型
+# 字典类型
 work_type = {'Private': 1,
              'Self-emp-not-inc': 2,
              'Self-emp-inc': 3,
@@ -134,7 +134,7 @@ native_country = {'United-States': 1,
                   'Holand-Netherlands': 41,
                   '?': -1}
 
-
+# 对应处理函数
 def f(x):
     rel = {
         'features': Vectors.dense(float(x[0]),
@@ -161,21 +161,26 @@ conf = SparkConf().setMaster("local").setAppName("ml")
 sc = SparkContext(conf=conf)  # 创建spark对象
 # solve the question:AttributeError: 'PipelinedRDD' object has no attribute 'toDF'
 sqlContext = SQLContext(sc)
-# 这里data数据用于训练
+# 这里data数据用于训练，由于数据量太大会crash，所以需要跳过一些行数，多次读取再综合
 data = sc.textFile("adult/adult.data").mapPartitionsWithIndex(
-    lambda i, test_iter: islice(test_iter, 20000, None) if i == 0 else test_iter).map(
+    lambda i, test_iter: islice(test_iter, 1008, None) if i == 0 else test_iter).map(
         lambda line: line.split(', ')).map(
             lambda p: Row(**f(p))).toDF()
+# 再读取开头被跳过的1008行，这个数字是反复测试的极限值
+data_front = sc.textFile("adult/adult.data").map(
+        lambda line: line.split(', ')).map(
+            lambda p: Row(**f(p))).toDF().limit(1008)
+data = data.union(data_front)  # 将数据合并，使用data的全部数据
 
 labelIndexer = StringIndexer().setInputCol("label").setOutputCol("indexedLabel").fit(data)
 featureIndexer = VectorIndexer().setInputCol("features").setOutputCol("indexedFeatures").setMaxCategories(4).fit(data)
 labelConverter = IndexToString().setInputCol("prediction").setOutputCol("predictedLabel").setLabels(labelIndexer.labels)
 trainingData = data
 
-# 这里adult.test里存在50K.的错误数据，通过vscode全部替换为50K的正常数据
-# test一共16000行，跳过10000行，用于验证
-testData = sc.textFile("adult/adult.test").mapPartitionsWithIndex(
-    lambda i, test_iter: islice(test_iter, 10000, None) if i == 0 else test_iter).map(
+# 这里adult.test里存在结尾50K.的错误数据，通过vscode去掉.全部替换为50K的正常数据
+# test一共16000行，跳过无关内容的第一行，用于验证测试
+testData = sc.textFile("adult/adult-new.test").mapPartitionsWithIndex(
+    lambda i, test_iter: islice(test_iter, 1, None) if i == 0 else test_iter).map(
         lambda line: line.split(', ')).map(
             lambda p: Row(**f(p))).toDF()
 dtClassifier = DecisionTreeClassifier().setLabelCol("indexedLabel").setFeaturesCol("indexedFeatures")
@@ -187,5 +192,5 @@ dtPredictions = dtPipelineModel.transform(testData)
 dtPredictions.select("predictedLabel", "label", "features").show(30)
 evaluator = MulticlassClassificationEvaluator().setLabelCol("indexedLabel").setPredictionCol("prediction")
 # 输出精度
-dtAccuracy = evaluator.evaluate(dtPredictions)
-print(dtAccuracy)
+accuracy = evaluator.evaluate(dtPredictions)
+print(accuracy)

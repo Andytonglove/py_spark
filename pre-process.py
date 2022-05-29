@@ -5,40 +5,42 @@ import pandas as pd
 
 '''
 文件预处理与数据验证：
-1、验证是不是有数据为空。这里存在为?的数据视为不空。去除空行。
-2、用if嵌套验证每一位的数据是否有效且字符串为纯数字。如为字符串则在字典里找有没有对应的key。
-发现adult.data以及adult.test都没有错误。对于.test文件则在后续进行处理
+1、验证是不是有数据为空。这里存在为?的数据视为不空。
+2、验证每一位的数据是否有效且字符串为纯数字。
+3、如数据为字符串则在字典里找有没有对应的key。
+发现adult.data以及adult.test都没有错误。对于.test文件末尾的.则在后续进行处理。
 '''
 
-data = pd.read_csv('adult/adult.data', header=None, sep=', ', engine='python')
-print(data.shape)
-# 第一步，判定含有空值的行
-line_null = data.isnull().T.any()
+data_file = pd.read_csv('adult/adult.data', header=None, sep=', ', engine='python')
+print(data_file.shape)
+
+# 判定含有空值的行
+line_null = data_file.isnull().T.any()
 for index, value in line_null.iteritems():  # items需要换成iteritems
     if value:
         print("{}行有空值".format(index + 1))
 # 去除空值
-data.dropna(axis=0, how='any')
+data_file.dropna(axis=0, how='any')
 
 
-# 第二步，判定不对劲的值
-def is_number(s):
+# 判定出错的值的函数
+def isNum(str):
     try:
-        float(s)
+        float(str)
         return True
     except ValueError:
         pass
 
     try:
         import unicodedata
-        unicodedata.numeric(s)
+        unicodedata.numeric(str)
         return True
     except (TypeError, ValueError):
         pass
 
     return False
 
-
+# 构建对应字典
 work_type = {'Private': 1,
              'Self-emp-not-inc': 2,
              'Self-emp-inc': 3,
@@ -146,20 +148,17 @@ native_country = {'United-States': 1,
                   'Hong': 40,
                   'Holand-Netherlands': 41,
                   '?': -1}
-for index, row in data.iterrows():
-    if is_number(row[0]):
+# 判定数据是否有效
+for index, row in data_file.iterrows():
+    if isNum(row[0]) and isNum(row[2]) and isNum(row[4]) and \
+        isNum(row[10]) and isNum(row[11]) and isNum(row[12]):
         if row[1] in work_type:
-            if is_number(row[2]):
-                if row[3] in education:
-                    if is_number(row[4]):
-                        if row[5] in marital_status:
-                            if row[6] in occupation:
-                                if row[7] in relationship:
-                                    if row[8] in race:
-                                        if row[9] in sex:
-                                            if is_number(row[10]):
-                                                if is_number(row[11]):
-                                                    if is_number(row[12]):
-                                                        if row[13] in native_country:
-                                                            continue
+            if row[3] in education:
+                if row[5] in marital_status:
+                    if row[6] in occupation:
+                        if row[7] in relationship:
+                            if row[8] in race:
+                                if row[9] in sex:
+                                    if row[13] in native_country:
+                                        continue
     print("{}有错误".format(index + 1))
