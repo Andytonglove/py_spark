@@ -4,7 +4,9 @@ findspark.init()
 import math
 import numpy as np
 import pandas as pd
-from pyspark.sql import SparkSession
+from pyspark import SparkContext, SparkConf
+from pyspark.sql import Row, SparkSession
+from pyspark.sql import functions
 
 
 def cal_dist(lat1, lon1, lat2, lon2):
@@ -15,6 +17,7 @@ def cal_dist(lat1, lon1, lat2, lon2):
     lon1 = float(lon1)
     lon2 = float(lon2)
     R = 6371
+    # 这里如果需要对整列计算，则需要用func的计算函数
     dLat = (lat2 - lat1) * math.pi / 180.0
     dLon = (lon2 - lon1) * math.pi / 180.0
 
@@ -116,7 +119,7 @@ def analyse_speed(points, num, up, all_points):
                 columns=['Latitude', 'Longitude', 'Altitude', 'Day_from1899', 'Date', 'Time', 'speed', 'acceleration',
                          'id', 'Stop'], data=single_period)  # 这里col删去'Speed_up'项
 
-            tmpdf.to_csv('D:\\CodeWorkSpace\\py2_spark\\170\\results\\' + ("加速" if up else "减速") + '区间' + str(index_in_save + 1) + '.csv',
+            tmpdf.to_csv('D:\\CodeWorkSpace\\py2_spark\\results\\' + ("加速" if up else "减速") + '区间' + str(index_in_save + 1) + '.csv',
                          index=False)
 
 
@@ -156,12 +159,3 @@ if __name__ == "__main__":
     analyse_speed(sdf, 10, True, all_dfl)
     # 分析减速区间
     analyse_speed(sdf, 10, False, all_dfl)
-
-
-    # my_window = Window.partitionBy().orderBy("time")
-    # schema_train = schema_train. \
-    # withColumn("speed",
-    #            speed_calc(lag("lon", 1).over(my_window).cast("float"), lag("lat", 1).over(my_window).cast("float"),
-    #                      col("lon").cast("float"), col("lat").cast("float"),
-    #                      lag("time", 1).over(my_window), col("time")))
-    # #其中speed-calc是通过每点与前一点的经纬度、时间差算出瞬时速度
