@@ -28,8 +28,8 @@ def speedCalc(lng1, lat1, lng2, lat2, timelag):
     # 计算距离，这里的**代表平方
     angle = fun.sin(dlat / 2) ** 2 + fun.cos(lat1) * fun.cos(lat2) * fun.sin(dlon / 2) ** 2
     distance = 2 * fun.asin(fun.sqrt(angle)) * 6371393  # 地球平均半径，约6371km
-    distance = fun.round(distance / 1000, 5)  # 五位小数，单位千米
-    speed = distance / timelag  # 距离除以时间差（小时）得到时速
+    # distance = fun.round(distance / 1000, 5)
+    speed = distance / timelag  # 距离除以时间差得到速度，这里速度是m/s
     return speed
 
 
@@ -46,7 +46,7 @@ def determine_threshold(df, rate):
         threshold = rank_list[speed_num]
 
         return threshold
-    # 若rate等于0, 返回一个给定的速度阈值
+    # 若rate等于0, 就返回一个给定的速度阈值，这里选取0.4
     else:
         return 0.4
 
@@ -120,6 +120,8 @@ if __name__ == "__main__":
     data = calStopPoints(data)
     # 计算加速度
     data = calAcceleration(data)
-    print(data.head(10))
-    # 写入文件
-    data.coalesce(1).write.mode("append").option("header","true").option("encoding","utf-8").csv(output_csv)
+    print(data.toPandas().head(10))  # 用pandas查看数据10条结果
+    pd_data = data.toPandas()  # 转换为pandas数据
+    # 将数据写入csv文件，这里直接用下面的spark得到的csv结果是个文件夹，故转成pandas再转成csv输出
+    # data.coalesce(1).write.mode("append").option("header","true").option("encoding","utf-8").csv(output_csv)
+    pd_data.to_csv(output_csv, mode='a', header='true', index=False, encoding='utf-8-sig')
