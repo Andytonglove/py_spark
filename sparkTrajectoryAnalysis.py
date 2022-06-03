@@ -46,7 +46,8 @@ def calSpeed(df):
 def calStopPoints(df):
     # 停留点分析
     threshold = 0.4  # 速度阈值也可以用比率计算得到，这里则直接取得速度阈值为0.4m/s
-    # 停留点标记，1为停留点，0为非停留点；判定依据：速度小于阈值，且与前后速度差值小于阈值
+    # 停留点标记，1为停留点，0为非停留点；判定依据：速度小于阈值，且之后的那个点速度也小于阈值
+    # 若小于阈值，则将上一个点作为停留开始点，继续遍历轨迹点，只要轨迹点的速率值仍小于阈值，则将该点作为停留点。
     df = df.withColumn("stop", fun.when((fun.col("speed") < threshold) | \
         (fun.lead("speed", 1).over(my_window) < threshold), 1).otherwise(0))
     return df
@@ -57,22 +58,22 @@ def calAcceleration(df):
     # 计算加速度，速度差除时间差
     df = df.withColumn("acceleration", fun.when((fun.col("id") > 0),
         (df.speed - fun.lag("speed", 1).over(my_window)) / df.timelag).otherwise(0))
-    
-    # 加速度为正，则flag为1，否则为-1，由此可计算加减速区间
-    df = df.withColumn("flag", fun.when(df.acceleration > 0, 1).otherwise(-1))
+    df = df.withColumn("flag", fun.when(df.acceleration > 0, 1).otherwise(-1))  # 加速度标记，1为加速度为正
 
-    # 计算加减速区间，变化了是1，否则是0
-    df = df.withColumn("flagChange",
+    # 计算加减速区间，加速度符号是否相等，没有变化就是1，否则是0
+    df = df.withColumn("isChange",
             (fun.col("flag") != fun.lag("flag").over(my_window)).cast("int")
         ).fillna(
-            0, subset=["flagChange"]
+            0, subset=["isChange"]
         )
+    # 判断每一行与上下行的关系从而确定是否可以作为区间
+    df = df.withColumn("inRange", fun.when((fun.col("id") < df.count() - 1),
+        (~((fun.lead("isChange", 1).over(my_window)==1) & (fun.col("isChange")==1)))).otherwise(False))
+    # 确定加速和减速区间
+    df = df.withColumn("speedUp", (fun.col("acceleration") > 0) & (fun.col("inRange") == True))
+    df = df.withColumn("speedDown", (fun.col("acceleration") < 0) & (fun.col("inRange") == True))
 
-    # 这里进行bool值取反，加速区间标记，1为加速区间，0为非加速区间
-    df = df.withColumn("indicator", fun.when((fun.col("id") < df.count() - 1),
-        (~((fun.lead("flagChange", 1).over(my_window)==1) & (fun.col("flagchange")==1)))).otherwise(False))
-
-    df.drop("flagChange").drop("flag")  # 删除不需要的列
+    df.drop("inRange").drop("isChange").drop("flag")  # 删除不需要的中间列
     return df
     
 
@@ -97,9 +98,13 @@ if __name__ == "__main__":
 
     data = calSpeed(data)  # 计算速度
     data = calStopPoints(data)  # 计算停留点
-    data = calAcceleration(data)  # 计算加速区间
+    data = calAcceleration(data)  # 计算加减速区间
 
-    print(data.toPandas().head(10))  # 用pandas查看数据10条结果
+    data_speed_up = data.filter(data.speedUp == True)  # 只保留加速区间
+    data_speed_down = data.filter(data.speedDown == True)  # 只保留减速区间
+    # TODO
+
+
     pd_data = data.toPandas()  # 转换为pandas数据
     # 将数据写入csv文件，这里如下如果直接用spark的csv方法得到的csv结果是个多文件文件夹，故转成pandas再转成csv输出
     # data.coalesce(1).write.mode("append").option("header","true").option("encoding","utf-8").csv(output_csv)
