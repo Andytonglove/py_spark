@@ -5,6 +5,7 @@
 本次课程设计使用课程实习过程中搭建的Windows下的Spark环境，采用Python编程。  
 数据采用微软的车辆轨迹数据-Geolife Trajectories中的编号为170号的车辆轨迹数据。  
 
+
 #### 完成的分析功能
 车辆轨迹分析应实现如下三种功能：
 1. 车辆速率计算  
@@ -16,12 +17,18 @@
 3. 车辆加减速分析  
     加速和减速都是持续性的过程，而突发的速率变化则可能是数据采集或预处理阶段的误差引起的正常波动，因此加/减速检测方法可以采用寻找至少连续N（N ≥ 2）个点速率单调变化的片段。  
 
+
 #### 代码程序说明
-1. speedCalc(lng1, lat1, lng2, lat2, timelag)为通过经纬度与时间差计算速度的数据处理函数；
-2. calSpeed(df)为进行车辆速率分析的函数，接收参数为dataframe，返回计算得到的dataframe；
-3. calStopPoints(df)为进行车辆停留点分析的函数，接收参数为dataframe，返回计算得到的dataframe；
-4. calAcceleration(df)为进行车辆加减速分析的函数，接收参数为dataframe，返回计算得到的dataframe；
-5. main为主程序，其中读取文件采用相对路径读取170号车辆数据的20080428112704.plt文件作为代表，读入数据文件并依次调用上述函数进行分析，实现全部分析并最后输出结果在result.csv中。
+1. speedCalc(lng1, lat1, lng2, lat2, timelag)为通过经纬度与时间差计算速度的数据处理函数；  
+
+2. calSpeed(df)为进行车辆速率分析的函数，接收参数为dataframe，返回计算得到的dataframe；  
+
+3. calStopPoints(df)为进行车辆停留点分析的函数，接收参数为dataframe，返回计算得到的dataframe；  
+
+4. calAcceleration(df)为进行车辆加减速分析的函数，接收参数为dataframe，返回计算得到的dataframe；  
+
+5. main为主程序，其中读取文件采用相对路径读取170号车辆数据的20080428112704.plt文件作为代表，读入数据文件并进行一些预处理操作，随后依次调用上述函数进行分析，实现全部分析并最后输出结果在result.csv中。  
+
 
 #### 运行结果说明
 运行结果以dataframe形式输出在文件**result.csv**中。其中：

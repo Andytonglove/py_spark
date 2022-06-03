@@ -6,7 +6,7 @@ import pyspark.sql.functions as fun
 from pyspark.sql import SQLContext,Window, Row
 from itertools import islice
 
-# spark入口
+# 初始化SparkConf
 conf = SparkConf().setMaster("local").setAppName("spark-Trajectory-Analysis")
 sc = SparkContext(conf = conf)
 sqlContext = SQLContext(sc)
@@ -36,7 +36,7 @@ def speedCalc(lng1, lat1, lng2, lat2, timelag):
 def calSpeed(df):
     # 计算速度列，这里将起点和终点速度置为0再进行计算，运用到窗函数
     row_number = df.count()
-    df = df.withColumn("speed", fun.when(((fun.col("id") < row_number-1) & (fun.col("id") > 0)),
+    df = df.withColumn("speed", fun.when(((fun.col("id") > 0) & (fun.col("id") < row_number - 1)),
         speedCalc(fun.lag("latitude", 1).over(my_window), fun.lag("longtitude", 1).over(my_window), 
             df.latitude, df.longtitude, df.timelag)).otherwise(0))  # 计算速度
     return df
@@ -46,8 +46,9 @@ def calSpeed(df):
 def calStopPoints(df):
     # 停留点分析
     threshold = 0.4  # 速度阈值也可以用比率计算得到，这里则直接取得速度阈值为0.4m/s
-    df = df.withColumn("stop", fun.when((fun.lead("speed", 1).over(my_window) < threshold) | \
-        (fun.col("speed") < threshold), 1).otherwise(0))  # 停留点标记，1为停留点，0为非停留点
+    # 停留点标记，1为停留点，0为非停留点；判定依据：速度小于阈值，且与前后速度差值小于阈值
+    df = df.withColumn("stop", fun.when((fun.col("speed") < threshold) | \
+        (fun.lead("speed", 1).over(my_window) < threshold), 1).otherwise(0))
     return df
 
 
@@ -56,13 +57,11 @@ def calAcceleration(df):
     # 计算加速度，速度差除时间差
     df = df.withColumn("acceleration", fun.when((fun.col("id") > 0),
         (df.speed - fun.lag("speed", 1).over(my_window)) / df.timelag).otherwise(0))
-
-    df = df.drop("timelag").drop("unix_time")  # 删除无用的时间戳和时间差列
     
     # 加速度为正，则flag为1，否则为-1，由此可计算加减速区间
     df = df.withColumn("flag", fun.when(df.acceleration > 0, 1).otherwise(-1))
 
-    # 计算加速区间
+    # 计算加减速区间，变化了是1，否则是0
     df = df.withColumn("flagChange",
             (fun.col("flag") != fun.lag("flag").over(my_window)).cast("int")
         ).fillna(
@@ -70,9 +69,10 @@ def calAcceleration(df):
         )
 
     # 这里进行bool值取反，加速区间标记，1为加速区间，0为非加速区间
-    df = df.withColumn("indicator", fun.when((fun.col("id") < df.count()-1),
+    df = df.withColumn("indicator", fun.when((fun.col("id") < df.count() - 1),
         (~((fun.lead("flagChange", 1).over(my_window)==1) & (fun.col("flagchange")==1)))).otherwise(False))
 
+    df.drop("flagChange").drop("flag")  # 删除不需要的列
     return df
     
 
@@ -84,23 +84,16 @@ if __name__ == "__main__":
 
     # 文件预处理操作，这里进行一些基础的列计算
     line = sc.textFile(data_path)  # 读取文件
-    # 读取经度、纬度、日期、时间信息，跳过前6行无用信息，并将时间和日期合并为一列
+    # 跳过前6行说明信息，读取经度、纬度、时间信息
     data = line.map(lambda line: line.split(",")).mapPartitionsWithIndex(
         lambda i, test_iter: islice(test_iter, 6, None) if i == 0 else test_iter).map(
             lambda x: {"latitude":float(x[0]), "longtitude":float(x[1]), "date":f"{x[5]} {x[6]}"}).map(
                 lambda p: Row(**(p))).toDF()
 
-    data = line.map(lambda line: line.split(",")).mapPartitionsWithIndex(
-        lambda i, test_iter: islice(test_iter, 6, None) if i == 0 else test_iter).map(
-            lambda x: {"latitude":float(x[0]), "longtitude":float(x[1]), "Day_from1899":float(4)}).map(
-                lambda p: Row(**(p))).toDF()
-
-    # 添加时间戳列
-    data = data.withColumn("unix_time", fun.unix_timestamp("date", "yyyy-MM-dd HH:mm:ss")).\
-        withColumn("id", fun.monotonically_increasing_id())
-    # 计算前后点的时间差，并添加至dataframe中
-    data = data.withColumn("timelag", data.unix_time - fun.lag("unix_time", 1).over(my_window))
-    data = data.fillna(0, subset=["timelag"])  # 将时间差为空的值赋值0
+    data = data.withColumn("id", fun.monotonically_increasing_id())  # 添加id列
+    # 这里用unix_timestamp函数计算yyyy-MM-dd HH:mm:ss式的前后时间差
+    data = data.withColumn("timelag", fun.unix_timestamp(data.date) - fun.unix_timestamp((fun.lag("date", 1).over(my_window))))
+    data = data.fillna(0, subset=["timelag"])  # 第一个点没有值，用0填充
 
     data = calSpeed(data)  # 计算速度
     data = calStopPoints(data)  # 计算停留点
@@ -108,6 +101,6 @@ if __name__ == "__main__":
 
     print(data.toPandas().head(10))  # 用pandas查看数据10条结果
     pd_data = data.toPandas()  # 转换为pandas数据
-    # 将数据写入csv文件，这里如果直接用spark的csv方法得到的csv结果是个文件夹，故转成pandas再转成csv输出
+    # 将数据写入csv文件，这里如下如果直接用spark的csv方法得到的csv结果是个多文件文件夹，故转成pandas再转成csv输出
     # data.coalesce(1).write.mode("append").option("header","true").option("encoding","utf-8").csv(output_csv)
     pd_data.to_csv(output_csv, mode='a', header='true', index=False, encoding='utf-8-sig')
