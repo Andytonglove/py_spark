@@ -23,7 +23,7 @@
 
 2. calSpeed(df)为进行车辆速率计算的函数，接收参数为dataframe，返回计算得到的dataframe；  
 
-3. calStopPoints(df)为进行车辆停留点分析的函数，接收参数为dataframe，返回计算得到的dataframe；  
+3. calStopPoints(df, limit)为进行车辆停留点分析的函数，接收参数为dataframe和阈值，返回计算得到的dataframe；  
 
 4. calAcceleration(df)为进行车辆加减速分析的函数，接收参数为dataframe，返回计算得到的dataframe；  
 

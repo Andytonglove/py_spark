@@ -43,12 +43,12 @@ def calSpeed(df):
 
 
 # 计算停留点函数：车辆停留点分析
-def calStopPoints(df):
+def calStopPoints(df, limit = 0.4):
+    # 速度阈值也可以用比率计算得到，这里则直接取得默认速度阈值为0.4m/s
     # 停留点分析：若小于阈值，则将上一个点作为停留开始点，继续遍历，只要轨迹点的速率值仍小于阈值，则将该点作为停留点。
-    threshold = 0.4  # 速度阈值也可以用比率计算得到，这里则直接取得速度阈值为0.4m/s
     # 停留点标记，1为停留点，0为非停留点；判定依据：速度小于阈值，或之后的那个点速度也小于阈值
-    df = df.withColumn("stop", F.when((F.col("speed") < threshold) | \
-        (F.lead("speed", 1).over(my_window) < threshold), 1).otherwise(0))
+    df = df.withColumn("stop", F.when((F.col("speed") < limit) | (F.lead("speed", 1).over(
+        my_window) < limit), 1).otherwise(0))
     return df
 
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
                 lambda p: Row(**(p))).toDF()
 
     data = data.withColumn("id", F.monotonically_increasing_id())  # 添加id列
-    # 这里用unix_timestamp函数计算yyyy-MM-dd HH:mm:ss式的前后时间差
+    # 这里用unix_timestamp函数可计算时刻式组织的前后时间差
     data = data.withColumn("timelag", F.unix_timestamp(data.date) - F.unix_timestamp((F.lag("date", 1).over(my_window))))
     data = data.fillna(0, subset=["timelag"])  # 第一个点没有值，用0填充
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             (F.col("direct") == F.lag("direct", 1).over(my_window)), F.sum(F.col("isChange")).over(
                 my_window.rangeBetween(Window.unboundedPreceding, 0))).otherwise(0))  # 计算区间序号
     
-    df = df.filter(df["rangeIndex"] != 0)  # 只保留有加减速区间的数据
+    df = df.filter(df.rangeIndex != 0)  # 只保留有加减速区间的数据
     # 在控制台输出区间
     for each in df.collect():
         if each.speedUp == 1:
