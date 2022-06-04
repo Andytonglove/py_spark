@@ -1,4 +1,4 @@
-﻿date,latitude,longtitude,id,timelag,speed,stop,acceleration,flag,isChange,indicator,speedUp,speedDown
+﻿date,latitude,longtitude,id,timelag,speed,stop,acceleration,direct,isChange,inRange,speedUp,speedDown
 2008-04-28 11:27:04,39.975496,116.333695,0,0,0.0,1,0.0,-1,0,True,False,False
 2008-04-28 11:27:06,39.975457,116.33375,1,2,3.2057673534687785,0,1.6028836767343893,1,1,True,True,False
 2008-04-28 11:27:07,39.975394,116.333741,2,1,3.2649048531327773,0,0.05913749966399884,1,0,True,True,False
