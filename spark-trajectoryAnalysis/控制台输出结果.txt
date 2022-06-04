@@ -1,12 +1,4 @@
-PS D:\CodeWorkSpace\py2_spark> & D:/Anaconda3/envs/py36/python.exe d:/CodeWorkSpace/py2_spark/sparkTrajectoryAnalysis.py
-Setting default log level to "WARN".
-To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
-2022-06-04 11:15:11 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:11 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:11 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:11 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:11 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:11 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+停留点分析：
 第0个轨迹点,为车辆停留点,时刻为2008-04-28 11:27:04,速度为0.0m/s
 第18个轨迹点,为车辆停留点,时刻为2008-04-28 11:27:38,速度为0.60231m/s
 第19个轨迹点,为车辆停留点,时刻为2008-04-28 11:27:40,速度为0.33938m/s
@@ -96,19 +88,8 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 第951个轨迹点,为车辆停留点,时刻为2008-04-28 11:50:06,速度为0.0743m/s
 第952个轨迹点,为车辆停留点,时刻为2008-04-28 11:50:08,速度为0.07394m/s
 第953个轨迹点,为车辆停留点,时刻为2008-04-28 11:50:10,速度为0.0m/s
-2022-06-04 11:15:13 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:13 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:13 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:13 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:13 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:13 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:14 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:14 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:14 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:14 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:14 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:14 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
-2022-06-04 11:15:14 WARN  WindowExec:66 - No Partition Defined for Window operation! Moving all data to a single partition, this can cause serious performance degradation.
+
+加减速分析：
 第1个轨迹点,处于第1个区间,该区间为加速区间,时刻为2008-04-28 11:27:06,速度为3.20577m/s
 第2个轨迹点,处于第1个区间,该区间为加速区间,时刻为2008-04-28 11:27:07,速度为3.2649m/s
 第4个轨迹点,处于第2个区间,该区间为加速区间,时刻为2008-04-28 11:27:10,速度为5.26273m/s
@@ -825,6 +806,3 @@ To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLeve
 第950个轨迹点,处于第241个区间,该区间为减速区间,时刻为2008-04-28 11:50:04,速度为0.33451m/s
 第951个轨迹点,处于第241个区间,该区间为减速区间,时刻为2008-04-28 11:50:06,速度为0.0743m/s
 第952个轨迹点,处于第241个区间,该区间为减速区间,时刻为2008-04-28 11:50:08,速度为0.07394m/s
-PS D:\CodeWorkSpace\py2_spark> 成功: 已终止 PID 51088 (属于 PID 6388 子进程)的进程。
-成功: 已终止 PID 6388 (属于 PID 18704 子进程)的进程。
-成功: 已终止 PID 18704 (属于 PID 44604 子进程)的进程。
