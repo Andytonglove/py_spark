@@ -1,9 +1,10 @@
 import findspark
 findspark.init()
 
-import pyspark.sql.functions as fun
+import pyspark.sql.functions as F
 from pyspark import SparkContext, SparkConf
-from pyspark.sql import SQLContext,Window, Row
+from pyspark.sql import SQLContext, Row
+from pyspark.sql import Window
 from itertools import islice
 
 # 初始化SparkConf
@@ -22,12 +23,12 @@ def speedCalc(lng1, lat1, lng2, lat2, timelag):
     lat1 = lat1 * pi / 180
     lng2 = lng2 * pi / 180
     lat2 = lat2 * pi / 180
-    dlon = fun.abs(lng2 - lng1)
-    dlat = fun.abs(lat2 - lat1)
+    dlon = F.abs(lng2 - lng1)
+    dlat = F.abs(lat2 - lat1)
     # 计算距离，这里的**代表平方
-    angle = fun.sin(dlat / 2) ** 2 + fun.cos(lat1) * fun.cos(lat2) * fun.sin(dlon / 2) ** 2
-    distance = 2 * fun.asin(fun.sqrt(angle)) * 6371393  # 地球平均半径，约6371km
-    # distance = fun.round(distance / 1000, 5)
+    angle = F.sin(dlat / 2) ** 2 + F.cos(lat1) * F.cos(lat2) * F.sin(dlon / 2) ** 2
+    distance = 2 * F.asin(F.sqrt(angle)) * 6371393  # 地球平均半径，约6371km
+    # distance = F.round(distance / 1000, 5)
     speed = distance / timelag  # 距离除以时间差得到速度，这里速度未转换就是m/s
     return speed
 
@@ -35,8 +36,8 @@ def speedCalc(lng1, lat1, lng2, lat2, timelag):
 # 计算速度值函数：车辆速率计算
 def calSpeed(df):
     # 通过上面的函数来计算速度，这里除去起点终点，直接视为速度为0
-    df = df.withColumn("speed", fun.when(((fun.col("id") > 0) & (fun.col("id") < df.count() - 1)),
-        speedCalc(fun.lag("latitude", 1).over(my_window), fun.lag("longtitude", 1).over(my_window), 
+    df = df.withColumn("speed", F.when(((F.col("id") > 0) & (F.col("id") < df.count() - 1)),
+        speedCalc(F.lag("latitude", 1).over(my_window), F.lag("longtitude", 1).over(my_window), 
             df.latitude, df.longtitude, df.timelag)).otherwise(0))  # 计算速度
     return df
 
@@ -46,28 +47,28 @@ def calStopPoints(df):
     # 停留点分析：若小于阈值，则将上一个点作为停留开始点，继续遍历，只要轨迹点的速率值仍小于阈值，则将该点作为停留点。
     threshold = 0.4  # 速度阈值也可以用比率计算得到，这里则直接取得速度阈值为0.4m/s
     # 停留点标记，1为停留点，0为非停留点；判定依据：速度小于阈值，或之后的那个点速度也小于阈值
-    df = df.withColumn("stop", fun.when((fun.col("speed") < threshold) | \
-        (fun.lead("speed", 1).over(my_window) < threshold), 1).otherwise(0))
+    df = df.withColumn("stop", F.when((F.col("speed") < threshold) | \
+        (F.lead("speed", 1).over(my_window) < threshold), 1).otherwise(0))
     return df
 
 
 # 计算加减速函数：车辆加减速分析
 def calAcceleration(df):
     # 计算加速度，速度差除时间差
-    df = df.withColumn("acceleration", fun.when((fun.col("id") > 0),
-        (df.speed - fun.lag("speed", 1).over(my_window)) / df.timelag).otherwise(0))
-    df = df.withColumn("direct", fun.when(df.acceleration > 0, 1).otherwise(-1))  # 加速度标记，1为加速度为正
+    df = df.withColumn("acceleration", F.when((F.col("id") > 0),
+        (df.speed - F.lag("speed", 1).over(my_window)) / df.timelag).otherwise(0))
+    df = df.withColumn("direct", F.when(df.acceleration > 0, 1).otherwise(-1))  # 加速度标记，1为加速度为正
 
     # 计算加减速区间，加速度符号是否相等，没有变化就是1，否则是0
-    df = df.withColumn("isChange",(fun.col("direct") != fun.lag("direct").over(my_window)).cast("int"))
+    df = df.withColumn("isChange",(F.col("direct") != F.lag("direct").over(my_window)).cast("int"))
     df = df.fillna(0, subset=["isChange"])  # 填充缺失值
     # 判断每一行与上下行的关系从而确定是否可以作为区间
-    df = df.withColumn("inRange", fun.when((fun.col("id") < df.count() - 1),
-        (~((fun.lead("isChange", 1).over(my_window)==1) & (fun.col("isChange")==1)))).otherwise(False))
+    df = df.withColumn("inRange", F.when((F.col("id") < df.count() - 1),
+        (~((F.lead("isChange", 1).over(my_window)==1) & (F.col("isChange")==1)))).otherwise(False))
     
     # 确定加速和减速区间
-    df = df.withColumn("speedUp", (fun.col("acceleration") > 0) & (fun.col("inRange") == True))
-    df = df.withColumn("speedDown", (fun.col("acceleration") < 0) & (fun.col("inRange") == True))
+    df = df.withColumn("speedUp", (F.col("acceleration") > 0) & (F.col("inRange") == True))
+    df = df.withColumn("speedDown", (F.col("acceleration") < 0) & (F.col("inRange") == True))
     return df
     
 
@@ -85,9 +86,9 @@ if __name__ == "__main__":
             lambda x: {"latitude":float(x[0]), "longtitude":float(x[1]), "date":f"{x[5]} {x[6]}"}).map(
                 lambda p: Row(**(p))).toDF()
 
-    data = data.withColumn("id", fun.monotonically_increasing_id())  # 添加id列
+    data = data.withColumn("id", F.monotonically_increasing_id())  # 添加id列
     # 这里用unix_timestamp函数计算yyyy-MM-dd HH:mm:ss式的前后时间差
-    data = data.withColumn("timelag", fun.unix_timestamp(data.date) - fun.unix_timestamp((fun.lag("date", 1).over(my_window))))
+    data = data.withColumn("timelag", F.unix_timestamp(data.date) - F.unix_timestamp((F.lag("date", 1).over(my_window))))
     data = data.fillna(0, subset=["timelag"])  # 第一个点没有值，用0填充
 
     # 进行分析
@@ -108,8 +109,8 @@ if __name__ == "__main__":
     
     # 把各个加减速区间合并输出，只要ischange改变了一次，就会增多一个区间，直接作为序号即可
     df = data.filter(data.inRange == 1)  # 过滤掉单个点的情况，只保留区间
-    df = df.withColumn("rangeIndex", fun.when((fun.col("direct") == fun.lead("direct", 1).over(my_window)) | \
-            (fun.col("direct") == fun.lag("direct", 1).over(my_window)), fun.sum(fun.col("isChange")).over(
+    df = df.withColumn("rangeIndex", F.when((F.col("direct") == F.lead("direct", 1).over(my_window)) | \
+            (F.col("direct") == F.lag("direct", 1).over(my_window)), F.sum(F.col("isChange")).over(
                 my_window.rangeBetween(Window.unboundedPreceding, 0))).otherwise(0))  # 计算区间序号
     
     df = df.filter(df["rangeIndex"] != 0)  # 只保留有加减速区间的数据
